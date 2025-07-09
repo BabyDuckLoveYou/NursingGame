@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เกมพยาบาลฉีดยา (Prototype)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f0f8ff;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .game-container {
+            background-color: #fff;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 90%;
+            max-width: 750px;
+            text-align: center;
+            position: relative;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-size: 2em;
+        }
+
+        .patient-info {
+            background-color: #e0f7fa;
+            border-left: 5px solid #00bcd4;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        .patient-info strong {
+            color: #00796b;
+        }
+
+        .medicine-options, .action-buttons, .injection-method-options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .medicine-button, .action-button, .injection-method-button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .medicine-button:hover, .action-button:hover, .injection-method-button:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+        }
+
+        .medicine-button:active, .action-button:active, .injection-method-button:active {
+            transform: translateY(0);
+        }
+
+        /* สีเฉพาะสำหรับปุ่มการกระทำ */
+        .action-button.clean { background-color: #607d8b; }
+        .action-button.clean:hover { background-color: #455a64; }
+        .action-button.prepare { background-color: #ff9800; }
+        .action-button.prepare:hover { background-color: #e68a00; }
+        .action-button.inject { background-color: #2196F3; }
+        .action-button.inject:hover { background-color: #0b7dda; }
+        .action-button.apply { background-color: #8bc34a; } /* ยาทา */
+        .action-button.apply:hover { background-color: #689f38; }
+        .action-button.administer { background-color: #ff5722; } /* ยาเม็ด/น้ำ */
+        .action-button.administer:hover { background-color: #e64a19; }
+
+        /* สีเฉพาะสำหรับปุ่มวิธีการฉีด */
+        .injection-method-button.intramuscular { background-color: #9c27b0; }
+        .injection-method-button.intramuscular:hover { background-color: #7b1fa2; }
+        .injection-method-button.intravenous { background-color: #f44336; }
+        .injection-method-button.intravenous:hover { background-color: #d32f2f; }
+        .injection-method-button.subcutaneous { background-color: #009688; }
+        .injection-method-button.subcutaneous:hover { background-color: #00796b; }
+        .injection-method-button.intradermal { background-color: #795548; }
+        .injection-method-button.intradermal:hover { background-color: #5d4037; }
+
+
+        #feedback {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .correct {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #a5d6a7;
+        }
+
+        .incorrect {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+        }
+
+        #score-display {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-top: 20px;
+            color: #1a237e;
+            text-align: center;
+        }
+
+        .next-patient-button-container {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .next-patient-button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+            margin-left: auto;
+            margin-right: 0;
+        }
+
+        .next-patient-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🏥 เกมพยาบาลฉีดยา 💉</h1>
+        <div class="patient-info">
+            <p><strong>ผู้ป่วยมีอาการ:</strong> <span id="patient-symptom"></span></p>
+        </div>
+
+        <div class="medicine-options" id="medicine-options">
+        </div>
+
+        <div class="action-buttons" id="action-buttons" style="display: none;">
+        </div>
+
+        <div class="injection-method-options" id="injection-method-options" style="display: none;">
+        </div>
+
+        <div id="feedback">
+        </div>
+
+        <div class="next-patient-button-container">
+            <button class="next-patient-button" id="next-patient-btn" style="display: none;">ผู้ป่วยคนถัดไป</button>
+        </div>
+
+        <div id="score-display">คะแนน: 0</div>
+    </div>
+
+    <script>
+        // --- ส่วนที่ 1: การประกาศตัวแปรและดึง Element จาก HTML ---
+        const patientSymptomElem = document.getElementById('patient-symptom');
+        const medicineOptionsElem = document.getElementById('medicine-options');
+        const actionButtonsElem = document.getElementById('action-buttons');
+        const injectionMethodOptionsElem = document.getElementById('injection-method-options');
+        const feedbackElem = document.getElementById('feedback');
+        const scoreDisplayElem = document.getElementById('score-display');
+        const nextPatientBtn = document.getElementById('next-patient-btn');
+
+        let score = 0;
+        let currentPatient = {};
+        let currentStepIndex = 0; // 0: เลือกยา, 1: ทำตามขั้นตอนยา
+
+        // กำหนดลำดับขั้นตอนที่ถูกต้องสำหรับยาแต่ละประเภท
+        const correctProcedures = {
+            'injection': [
+                { id: 'cleanArea', text: 'ทำความสะอาดบริเวณที่ฉีด', class: 'clean' },
+                { id: 'prepareMedicine', text: 'เตรียมยา', class: 'prepare' },
+                { id: 'injectMedicine', text: 'ฉีดยา', class: 'inject' },
+                { id: 'selectInjectionMethod', text: 'เลือกวิธีการฉีด', class: '' } // นี่ไม่ใช่ปุ่ม แต่เป็นสถานะเพื่อเรียก renderInjectionMethodButtons
+            ],
+            'topical': [ // ยาทา
+                { id: 'cleanArea', text: 'ทำความสะอาดบริเวณที่ทา', class: 'clean' },
+                { id: 'applyMedicine', text: 'ทายา', class: 'apply' }
+            ],
+            'oral': [ // ยาเม็ด/น้ำ
+                { id: 'prepareMedicine', text: 'เตรียมยา', class: 'prepare' },
+                { id: 'administerMedicine', text: 'ให้ผู้ป่วยรับประทานยา', class: 'administer' }
+            ]
+        };
+
+        let currentProcedure = []; // เก็บขั้นตอนที่ถูกต้องสำหรับผู้ป่วยปัจจุบัน
+
+        // --- ส่วนที่ 2: ข้อมูลผู้ป่วยและยา ---
+        // เพิ่ม 'medicineType' (injection, topical, oral) และ 'correctInjectionMethod' (สำหรับยาฉีดเท่านั้น)
+        const patients = [
+            { symptom: "ไข้สูง", correctMedicine: "ยาลดไข้ฉีด", medicineType: "injection", correctInjectionMethod: "intramuscular" },
+            { symptom: "ปวดหัวไมเกรน", correctMedicine: "ยาไมเกรนฉีด", medicineType: "injection", correctInjectionMethod: "subcutaneous" },
+            { symptom: "ผื่นคันจากภูมิแพ้", correctMedicine: "ยาแก้แพ้ชนิดทา", medicineType: "topical" },
+            { symptom: "ท้องเสียรุนแรง", correctMedicine: "ยาแก้ท้องเสียฉีด", medicineType: "injection", correctInjectionMethod: "intravenous" },
+            { symptom: "ไอแห้ง เจ็บคอ", correctMedicine: "ยาแก้ไอชนิดน้ำ", medicineType: "oral" },
+            { symptom: "ปวดฟัน", correctMedicine: "ยาแก้ปวดฟันชนิดเม็ด", medicineType: "oral" },
+            { symptom: "เวียนหัว คลื่นไส้", correctMedicine: "ยาแก้เวียนหัวฉีด", medicineType: "injection", correctInjectionMethod: "intravenous" },
+            { symptom: "ปวดกล้ามเนื้อ", correctMedicine: "ยาคลายกล้ามเนื้อชนิดทา", medicineType: "topical" },
+            { symptom: "อาการแพ้อาหาร", correctMedicine: "ยาแก้แพ้ฉีด", medicineType: "injection", correctInjectionMethod: "intradermal" },
+            { symptom: "ไข้หวัดใหญ่", correctMedicine: "ยาลดไข้ชนิดเม็ด", medicineType: "oral" },
+            { symptom: "ปวดท้องประจำเดือน", correctMedicine: "ยาแก้ปวดประจำเดือนชนิดเม็ด", medicineType: "oral" },
+            { symptom: "ตาอักเสบ", correctMedicine: "ยาหยอดตาปฏิชีวนะ", medicineType: "topical" }, // ใช้ topical สำหรับหยอดตา
+            { symptom: "แผลถลอก", correctMedicine: "น้ำยาฆ่าเชื้อชนิดทา", medicineType: "topical" },
+            { symptom: "นอนไม่หลับ", correctMedicine: "ยานอนหลับอ่อนๆชนิดเม็ด", medicineType: "oral" },
+            { symptom: "ความดันโลหิตสูง", correctMedicine: "ยาลดความดันชนิดเม็ด", medicineType: "oral" },
+            { symptom: "เบาหวาน (ระดับน้ำตาลสูง)", correctMedicine: "ยาอินซูลิน", medicineType: "injection", correctInjectionMethod: "subcutaneous" },
+            { symptom: "กระเพาะอาหารอักเสบ", correctMedicine: "ยาเคลือบกระเพาะชนิดน้ำ", medicineType: "oral" },
+            { symptom: "ปวดข้อเข่า", correctMedicine: "ยาแก้ปวดข้อชนิดทา", medicineType: "topical" },
+            { symptom: "ติดเชื้อทางเดินปัสสาวะ", correctMedicine: "ยาปฏิชีวนะชนิดเม็ด", medicineType: "oral" },
+            { symptom: "เจ็บคอจากทอนซิลอักเสบ", correctMedicine: "ยาฆ่าเชื้อชนิดเม็ด", medicineType: "oral" }
+        ];
+
+        // รายการยาทั้งหมดที่มีในเกม (รวมยาที่ถูกต้องและยาหลอก) พร้อมระบุประเภท
+        const allMedicines = [
+            { name: "ยาลดไข้ฉีด", type: "injection" },
+            { name: "ยาไมเกรนฉีด", type: "injection" },
+            { name: "ยาแก้แพ้ชนิดทา", type: "topical" },
+            { name: "ยาแก้ท้องเสียฉีด", type: "injection" },
+            { name: "ยาแก้ไอชนิดน้ำ", type: "oral" },
+            { name: "ยาแก้ปวดฟันชนิดเม็ด", type: "oral" },
+            { name: "ยาแก้เวียนหัวฉีด", type: "injection" },
+            { name: "ยาคลายกล้ามเนื้อชนิดทา", type: "topical" },
+            { name: "ยาแก้แพ้ฉีด", type: "injection" },
+            { name: "ยาลดไข้ชนิดเม็ด", type: "oral" },
+            { name: "ยาแก้ปวดประจำเดือนชนิดเม็ด", type: "oral" },
+            { name: "ยาหยอดตาปฏิชีวนะ", type: "topical" },
+            { name: "น้ำยาฆ่าเชื้อชนิดทา", type: "topical" },
+            { name: "ยานอนหลับอ่อนๆชนิดเม็ด", type: "oral" },
+            { name: "ยาลดความดันชนิดเม็ด", type: "oral" },
+            { name: "ยาอินซูลิน", type: "injection" },
+            { name: "ยาเคลือบกระเพาะชนิดน้ำ", type: "oral" },
+            { name: "ยาแก้ปวดข้อชนิดทา", type: "topical" },
+            { name: "ยาปฏิชีวนะชนิดเม็ด", type: "oral" },
+            { name: "ยาฆ่าเชื้อชนิดเม็ด", type: "oral" },
+            { name: "ยาบำรุงชนิดเม็ด", type: "oral" },
+            { name: "วิตามินซีชนิดเม็ด", type: "oral" },
+            { name: "ยาถ่ายพยาธิชนิดเม็ด", type: "oral" },
+            { name: "ยาแก้ปวดท้องชนิดเม็ด", type: "oral" },
+            { name: "ยาแก้ปวดชนิดทา", type: "topical" }
+        ];
+
+        // --- ส่วนที่ 3: ฟังก์ชันช่วยเหลือ (Helper Functions) ---
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // อัปเดต getActionText ให้ครอบคลุมทุกการกระทำและประเภทวิธีการฉีด
+        function getActionText(actionId) {
+            switch (actionId) {
+                case 'cleanArea': return 'ทำความสะอาดบริเวณ';
+                case 'prepareMedicine': return 'เตรียมยา';
+                case 'injectMedicine': return 'ฉีดยา';
+                case 'applyMedicine': return 'ทายา';
+                case 'administerMedicine': return 'ให้ผู้ป่วยรับประทานยา';
+                case 'intramuscular': return 'ฉีดเข้ากล้าม (IM)';
+                case 'intravenous': return 'ฉีดเข้าเส้น (IV)';
+                case 'subcutaneous': return 'ฉีดเข้าใต้ผิวหนัง (SC)';
+                case 'intradermal': return 'ฉีดเข้าผิวหนัง (ID)';
+                default: return '';
+            }
+        }
+
+        function handleWrongAttempt(message, deduction) {
+            feedbackElem.textContent = `🚨 ${message}`;
+            feedbackElem.classList.remove('correct');
+            feedbackElem.classList.add('incorrect');
+            score = Math.max(0, score - deduction);
+            scoreDisplayElem.textContent = `คะแนน: ${score}`;
+            medicineOptionsElem.style.display = 'none';
+            actionButtonsElem.style.display = 'none';
+            injectionMethodOptionsElem.style.display = 'none';
+            nextPatientBtn.style.display = 'block';
+        }
+
+        // --- ส่วนที่ 4: การควบคุม Flow ของเกม ---
+        function startGame() {
+            score = 0;
+            scoreDisplayElem.textContent = `คะแนน: ${score}`;
+            loadNewPatient();
+        }
+
+        function loadNewPatient() {
+            feedbackElem.textContent = '';
+            feedbackElem.className = '';
+            nextPatientBtn.style.display = 'none';
+            actionButtonsElem.style.display = 'none';
+            actionButtonsElem.innerHTML = '';
+            injectionMethodOptionsElem.style.display = 'none';
+            injectionMethodOptionsElem.innerHTML = '';
+            
+            medicineOptionsElem.style.pointerEvents = 'auto';
+            medicineOptionsElem.style.display = 'flex';
+            currentStepIndex = 0;
+
+            const randomIndex = Math.floor(Math.random() * patients.length);
+            currentPatient = patients[randomIndex];
+
+            patientSymptomElem.textContent = currentPatient.symptom;
+            feedbackElem.textContent = `เลือกยาที่ถูกต้องสำหรับอาการ "${currentPatient.symptom}"`;
+
+            let chosenMedicines = new Set();
+            chosenMedicines.add(currentPatient.correctMedicine);
+
+            while (chosenMedicines.size < 4) {
+                const randomMed = allMedicines[Math.floor(Math.random() * allMedicines.length)].name;
+                if (randomMed !== currentPatient.correctMedicine && !chosenMedicines.has(randomMed)) {
+                    chosenMedicines.add(randomMed);
+                }
+            }
+
+            let finalMedicineOptions = Array.from(chosenMedicines);
+            shuffleArray(finalMedicineOptions);
+            renderMedicineButtons(finalMedicineOptions);
+        }
+
+        // --- ส่วนที่ 5: การสร้างปุ่ม (Rendering Functions) ---
+        function renderMedicineButtons(medicines) {
+            medicineOptionsElem.innerHTML = '';
+            medicines.forEach(medicine => {
+                const button = document.createElement('button');
+                button.classList.add('medicine-button');
+                button.textContent = medicine;
+                button.onclick = () => selectMedicine(medicine);
+                medicineOptionsElem.appendChild(button);
+            });
+        }
+
+        // ปรับปรุง renderActionButtons ให้สร้างปุ่มตาม currentProcedure
+        function renderActionButtons() {
+            actionButtonsElem.innerHTML = '';
+            actionButtonsElem.style.display = 'flex';
+            medicineOptionsElem.style.display = 'none';
+            injectionMethodOptionsElem.style.display = 'none';
+
+            let buttonsToRender = currentProcedure.filter(step => step.id !== 'selectInjectionMethod');
+            shuffleArray(buttonsToRender); // สลับลำดับปุ่ม
+
+            buttonsToRender.forEach(btn => {
+                const button = document.createElement('button');
+                button.classList.add('action-button', btn.class);
+                button.textContent = btn.text;
+                button.onclick = () => handleActionStep(btn.id);
+                actionButtonsElem.appendChild(button);
+            });
+        }
+
+        function renderInjectionMethodButtons() {
+            injectionMethodOptionsElem.innerHTML = '';
+            injectionMethodOptionsElem.style.display = 'flex';
+            actionButtonsElem.style.display = 'none'; // ซ่อนส่วนปุ่มขั้นตอนการกระทำ
+
+            let buttons = [
+                { id: 'intramuscular', text: 'ฉีดเข้ากล้าม (IM)', class: 'intramuscular' },
+                { id: 'intravenous', text: 'ฉีดเข้าเส้น (IV)', class: 'intravenous' },
+                { id: 'subcutaneous', text: 'ฉีดเข้าใต้ผิวหนัง (SC)', class: 'subcutaneous' },
+                { id: 'intradermal', text: 'ฉีดเข้าผิวหนัง (ID)', class: 'intradermal' }
+            ];
+            shuffleArray(buttons);
+
+            buttons.forEach(btn => {
+                const button = document.createElement('button');
+                button.classList.add('injection-method-button', btn.class);
+                button.textContent = btn.text;
+                button.onclick = () => handleInjectionMethod(btn.id);
+                injectionMethodOptionsElem.appendChild(button);
+            });
+        }
+
+        // --- ส่วนที่ 6: Logic การเล่นเกม (Game Logic) ---
+        function selectMedicine(selectedMedicine) {
+            medicineOptionsElem.style.pointerEvents = 'none';
+
+            if (selectedMedicine === currentPatient.correctMedicine) {
+                feedbackElem.textContent = `คุณเลือกยา "${selectedMedicine}" ถูกต้อง!`;
+                feedbackElem.classList.remove('incorrect');
+                feedbackElem.classList.add('correct');
+
+                // กำหนดขั้นตอนที่ถูกต้องตามประเภทของยาที่เลือก
+                currentProcedure = correctProcedures[currentPatient.medicineType];
+                currentStepIndex = 0; // เริ่มต้นที่ขั้นตอนแรกของ procedure ที่เลือก
+
+                // แจ้งให้ผู้เล่นเลือกขั้นตอนแรก
+                feedbackElem.textContent += ` เลือกขั้นตอนแรก: "${getActionText(currentProcedure[currentStepIndex].id)}"` || '';
+
+                // แสดงปุ่มขั้นตอนที่ถูกต้อง (ยกเว้น selectInjectionMethod)
+                renderActionButtons();
+            } else {
+                handleWrongAttempt(`คุณเลือกยา "${selectedMedicine}" ผิดพลาด! 😥 (ยาที่ถูกต้อง: ${currentPatient.correctMedicine})`, 10);
+            }
+        }
+
+        function handleActionStep(actionId) {
+            if (!currentProcedure || currentProcedure.length === 0 || currentStepIndex >= currentProcedure.length) {
+                handleWrongAttempt('เกิดข้อผิดพลาดภายในเกม กรุณาลองเริ่มใหม่', 0);
+                return;
+            }
+
+            const expectedStep = currentProcedure[currentStepIndex];
+
+            if (actionId === expectedStep.id) {
+                feedbackElem.textContent = `ถูกต้อง! คุณได้ดำเนินการ "${getActionText(actionId)}" แล้ว!`;
+                feedbackElem.classList.remove('incorrect');
+                feedbackElem.classList.add('correct');
+                currentStepIndex++;
+
+                if (actionId === 'injectMedicine' && currentPatient.medicineType === 'injection') {
+                    // ถ้าเป็นการฉีดยา (สำหรับยาฉีด) ให้ไปเลือกวิธีการฉีด
+                    feedbackElem.textContent += ` เลือกวิธีการฉีด:`;
+                    renderInjectionMethodButtons();
+                } else if (currentStepIndex < currentProcedure.length) {
+                    // ถ้ายังมีขั้นตอนต่อไป
+                    const nextExpectedStep = currentProcedure[currentStepIndex];
+                    if (nextExpectedStep.id === 'selectInjectionMethod') {
+                        // กรณีนี้ไม่ควรเกิดขึ้น เพราะ injectMedicine จะเรียก renderInjectionMethodButtons แล้ว
+                        // แต่ใส่ไว้เพื่อความปลอดภัย
+                        feedbackElem.textContent += ` เลือกวิธีการฉีด:`;
+                        renderInjectionMethodButtons();
+                    } else {
+                        feedbackElem.textContent += ` เลือกขั้นตอนถัดไป: "${getActionText(nextExpectedStep.id)}"`;
+                        renderActionButtons(); // แสดงปุ่มขั้นตอนที่เหลือ (สุ่มตำแหน่ง)
+                    }
+                } else {
+                    // ทำครบทุกขั้นตอนของยาที่ไม่ใช่ยาฉีด หรือยาฉีดที่ไม่ได้มีขั้นตอนการเลือกวิธีฉีดแยก
+                    finishPatientCare();
+                }
+            } else {
+                handleWrongAttempt(`ลำดับขั้นตอนผิด! คุณควรจะดำเนินการ "${getActionText(expectedStep.id)}"`, 5);
+            }
+        }
+
+        function handleInjectionMethod(methodId) {
+            if (methodId === currentPatient.correctInjectionMethod) {
+                feedbackElem.textContent = `ถูกต้อง! คุณได้ดำเนินการ "${getActionText(methodId)}" แล้ว! ผู้ป่วยหายดีแล้ว 😊`;
+                feedbackElem.classList.remove('incorrect');
+                feedbackElem.classList.add('correct');
+                finishPatientCare();
+            } else {
+                handleWrongAttempt(`วิธีการฉีดผิด! คุณควรจะดำเนินการ "${getActionText(currentPatient.correctInjectionMethod)}"`, 5);
+            }
+        }
+
+        function finishPatientCare() {
+            score += 10;
+            scoreDisplayElem.textContent = `คะแนน: ${score}`;
+            nextPatientBtn.style.display = 'block';
+            actionButtonsElem.style.display = 'none';
+            injectionMethodOptionsElem.style.display = 'none';
+            medicineOptionsElem.style.display = 'none'; // ซ่อนปุ่มยาเมื่อจบแล้ว
+        }
+
+        // --- ส่วนที่ 7: การเริ่มต้นเกม ---
+        nextPatientBtn.addEventListener('click', loadNewPatient);
+        startGame();
+    </script>
+</body>
+</html>
